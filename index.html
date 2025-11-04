@@ -27,7 +27,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">오늘의 챌린지</h2>
-                <p class="text-sm text-gray-500 mt-1" id="todayDate2"></p>
                 <!-- 오늘 기준 Day -->
                 <p class="text-sm text-gray-600 mt-1" id="todayDayDisplay"></p>
             </div>
@@ -199,7 +198,6 @@ function render() {
     const today = new Date();
     const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
     document.getElementById("todayDate").textContent = dateStr;
-    document.getElementById("todayDate2").textContent = dateStr;
 
     // 오늘 기준 Day 계산 (시작일 기준, 바뀌지 않음)
     const CHALLENGE_START = new Date("2025-11-01");
