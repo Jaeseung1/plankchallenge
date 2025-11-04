@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3인 플랭크 챌린지</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-orange-50 to-red-50 min-h-screen p-6">
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <span class="text-4xl">🔥</span>
+                <h1 class="text-4xl font-bold text-gray-800">3인 플랭크 챌린지</h1>
+                <span class="text-4xl">🔥</span>
+            </div>
+            <p class="text-gray-600">DB 연동 버전</p>
+        </div>
+
+        <!-- Day Selector -->
+        <div class="bg-white rounded-xl p-6 shadow-md mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">오늘의 챌린지</h2>
+                <div class="flex gap-2">
+                    <button onclick="changeDay(-1)" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">◀</button>
+                    <div id="currentDayDisplay" class="px-6 py-2 bg-orange-500 text-white rounded-lg font-bold">Day 1</div>
+                    <button onclick="changeDay(1)" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">▶</button>
+                </div>
+            </div>
+            <div class="text-center">
+                <div id="targetDisplay" class="text-4xl font-bold mb-2 text-orange-600"></div>
+                <div id="setsDisplay" class="text-lg text-gray-600"></div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl p-6 shadow-lg mb-6">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <span class="text-2xl">🏆</span>
+                <h3 class="text-2xl font-bold">리더보드</h3>
+            </div>
+            <div id="leaderboard" class="space-y-3"></div>
+        </div>
+
+        <!-- Players -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6" id="playersContainer"></div>
+
+        <!-- Tips -->
+        <div class="bg-white rounded-xl p-6 shadow-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">💡 성공 팁</h3>
+            <ul class="space-y-2 text-gray-700">
+                <li>✓ <strong>올바른 자세:</strong> 어깨-엉덩이-발목이 일직선</li>
+                <li>✓ <strong>호흡:</strong> 자연스럽게 이어가기</li>
+                <li>✓ <strong>세트 간 휴식:</strong> 30초~1분</li>
+                <li>✓ <strong>무리 금지:</strong> 통증이 느껴지면 즉시 중단</li>
+            </ul>
+        </div>
+    </div>
+
+<script>
+/* ===========================
+   ✅ 1. 백엔드 API 설정
+   =========================== */
+const API_BASE = "http://162.120.184.232:3000/api";
+
+/* ===========================
+   ✅ 2. 스케줄 정보
+   =========================== */
+const schedule = [
+    { day: 1, duration: 20, sets: 2, rest: false },
+    { day: 2, duration: 20, sets: 2, rest: false },
+    { day: 3, duration: 30, sets: 2, rest: false },
+    { day: 4, duration: 30, sets: 2, rest: false },
+    { day: 5, duration: 40, sets: 2, rest: false },
+    { day: 6, duration: 0, sets: 0, rest: true },
+    { day: 7, duration: 45, sets: 2, rest: false },
+    { day: 8, duration: 45, sets: 2, rest: false },
+    { day: 9, duration: 60, sets: 2, rest: false },
+    { day: 10, duration: 60, sets: 2, rest: false },
+    { day: 11, duration: 70, sets: 2, rest: false },
+    { day: 12, duration: 90, sets: 2, rest: false },
+    { day: 13, duration: 0, sets: 0, rest: true },
+    { day: 14, duration: 90, sets: 2, rest: false },
+    { day: 15, duration: 90, sets: 3, rest: false },
+    { day: 16, duration: 120, sets: 2, rest: false },
+    { day: 17, duration: 120, sets: 2, rest: false },
+    { day: 18, duration: 150, sets: 2, rest: false },
+    { day: 19, duration: 150, sets: 2, rest: false },
+    { day: 20, duration: 0, sets: 0, rest: true },
+    { day: 21, duration: 180, sets: 2, rest: false },
+    { day: 22, duration: 180, sets: 2, rest: false },
+    { day: 23, duration: 210, sets: 2, rest: false },
+    { day: 24, duration: 210, sets: 2, rest: false },
+    { day: 25, duration: 240, sets: 2, rest: false },
+    { day: 26, duration: 240, sets: 2, rest: false },
+    { day: 27, duration: 0, sets: 0, rest: true },
+    { day: 28, duration: 270, sets: 2, rest: false },
+    { day: 29, duration: 270, sets: 2, rest: false },
+    { day: 30, duration: 300, sets: 1, rest: false },
+];
+
+let currentDay = 1;
+let players = [];
+
+/* ===========================
+   ✅ 3. API 함수
+   =========================== */
+async function apiGet(path) {
+    const res = await fetch(`${API_BASE}${path}`);
+    return res.json();
+}
+async function apiPost(path, data) {
+    await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+}
+
+/* ===========================
+   ✅ 4. 날짜 변경
+   =========================== */
+async function changeDay(delta) {
+    currentDay = Math.max(1, Math.min(30, currentDay + delta));
+    await apiPost("/state", { currentDay });
+    render();
+}
+
+/* ===========================
+   ✅ 5. 시간 표시 함수
+   =========================== */
+function formatTime(seconds) {
+    if (seconds === 0) return "휴식일";
+    if (seconds < 60) return `${seconds}초`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return s ? `${m}분 ${s}초` : `${m}분`;
+}
+
+/* ===========================
+   ✅ 6. 완료 체크
+   =========================== */
+async function toggleCompletion(playerId) {
+    const player = players.find(p => p.id === playerId);
+    const prev = player.progress[currentDay] === true;
+    const next = !prev;
+
+    await apiPost("/progress", {
+        playerId,
+        day: currentDay,
+        completed: next
+    });
+
+    await loadPlayers();
+    render();
+}
+
+/* ===========================
+   ✅ 7. 플레이어 이름 변경
+   =========================== */
+async function updatePlayerName(id, name) {
+    await apiPost("/players", { id, name });
+    await loadPlayers();
+    render();
+}
+
+/* ===========================
+   ✅ 8. 상태 로드
+   =========================== */
+async function loadState() {
+    const state = await apiGet("/state");
+    currentDay = state.currentDay;
+}
+
+/* ===========================
+   ✅ 9. 플레이어 로드
+   =========================== */
+async function loadPlayers() {
+    players = await apiGet("/players");
+}
+
+/* ===========================
+   ✅ 10. 리더보드
+   =========================== */
+function getLeaderboard() {
+    const list = players.map(p => ({
+        id: p.id,
+        name: p.name || `참가자 ${p.id}`,
+        score: Object.values(p.progress).filter(v => v).length
+    }));
+    return list.sort((a, b) => b.score - a.score);
+}
+
+/* ===========================
+   ✅ 11. 렌더링
+   =========================== */
+function render() {
+    const info = schedule[currentDay - 1];
+
+    document.getElementById("currentDayDisplay").textContent = `Day ${currentDay}`;
+    document.getElementById("targetDisplay").textContent = formatTime(info.duration);
+    document.getElementById("setsDisplay").textContent = info.rest ? "" : `${info.sets} 세트`;
+
+    /* ✅ 리더보드 */
+    const lb = getLeaderboard();
+    const medals = ["🥇", "🥈", "🥉"];
+    document.getElementById("leaderboard").innerHTML = lb.map((p, i) => `
+        <div class="bg-white bg-opacity-20 rounded-lg p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="text-2xl">${medals[i] || ""}</div>
+                <div class="text-xl font-bold">${p.name}</div>
+            </div>
+            <div class="text-2xl font-bold">${p.score}일</div>
+        </div>
+    `).join("");
+
+    /* ✅ 플레이어 카드 */
+    document.getElementById("playersContainer").innerHTML = players.map(p => {
+        const completed = p.progress[currentDay] === true;
+        return `
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <input value="${p.name}" onchange="updatePlayerName(${p.id}, this.value)"
+                    class="w-full px-4 py-2 rounded-lg border-2 mb-4" placeholder="참가자 ${p.id} 이름">
+
+                <button onclick="toggleCompletion(${p.id})"
+                    class="w-full py-4 rounded-xl font-bold text-lg ${
+                        completed ? "bg-green-500 text-white" : "bg-gray-200"
+                    }">
+                    ${completed ? "✓ 완료!" : "오늘 운동 체크하기"}
+                </button>
+            </div>
+        `;
+    }).join("");
+}
+
+/* ===========================
+   ✅ 12. 초기화
+   =========================== */
+async function init() {
+    await loadState();
+    await loadPlayers();
+    render();
+}
+
+init();
+</script>
+</body>
+</html>
