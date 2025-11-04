@@ -200,11 +200,12 @@ function render() {
     const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
     document.getElementById("todayDate").textContent = dateStr;
     document.getElementById("todayDate2").textContent = dateStr;
+    document.getElementById("todayDayDisplay").textContent = `오늘은 Day ${currentDay} 입니다`;
 
     document.getElementById("currentDayDisplay").textContent = `Day ${currentDay}`;
     document.getElementById("targetDisplay").textContent = formatTime(info.duration);
     document.getElementById("setsDisplay").textContent = info.rest ? "" : `${info.sets} 세트`;
-
+    
     // 리더보드
     const lb = getLeaderboard();
     const medals = ["🥇", "🥈", "🥉"];
