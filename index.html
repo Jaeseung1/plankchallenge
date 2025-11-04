@@ -75,8 +75,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 <script>
 // ====== 백엔드 API ======
-// const API_BASE = "http://localhost:3000/api";
-const API_BASE = "https://pseudoinvalidly-unmixable-tiffiny.ngrok-free.dev/api";
+// const API_BASE = "http://localhost:3000/api"
+// const API_BASE = "https://pseudoinvalidly-unmixable-tiffiny.ngrok-free.dev/api";
+const API_BASE = window.location.hostname === 'localhost' 
+    ? "http://localhost:3000/api"
+    : "https://your-ngrok-url.ngrok.io/api";
 
 // ====== 챌린지 스케줄 ======
 const schedule = [
@@ -112,16 +115,14 @@ const schedule = [
     { day: 30, duration: 300, sets: 1, rest: false },
 ];
 
-let currentDay = Math.floor((new Date() - new Date("2025-11-01")) / (1000*60*60*24)) + 1;
-currentDay = Math.max(1, Math.min(30, currentDay));
+let currentDay = 1;
+let todayDay = 1;
 let players = [];
 
 // ====== API 호출 ======
 async function apiGet(path) {
     const res = await fetch(`${API_BASE}${path}`, {
-        headers: {
-            'ngrok-skip-browser-warning': 'true'
-        }
+        headers: { 'ngrok-skip-browser-warning': 'true' }
     });
     return res.json();
 }
@@ -173,6 +174,13 @@ async function loadPlayers() {
     players = await apiGet("/players");
 }
 
+// ====== 오늘 Day 가져오기 ======
+async function loadState() {
+    const data = await apiGet("/state");
+    todayDay = data.currentDay;
+    currentDay = todayDay; // 초기 표시 Day
+}
+
 // ====== 리더보드 계산 ======
 function getLeaderboard() {
     const list = players.map(p => ({
@@ -199,15 +207,14 @@ function render() {
     const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
     document.getElementById("todayDate").textContent = dateStr;
 
-    // 오늘 기준 Day 계산 (시작일 기준, 바뀌지 않음)
-    const CHALLENGE_START = new Date("2025-11-01");
-    const todayDay = Math.min(Math.max(Math.floor((today - CHALLENGE_START) / (1000*60*60*24)) + 1, 1), 30);
+    // 오늘 기준 Day (백엔드 기준)
     document.getElementById("todayDayDisplay").textContent = `오늘은 Day ${todayDay} 입니다`;
 
+    // 현재 선택 Day
     document.getElementById("currentDayDisplay").textContent = `Day ${currentDay}`;
     document.getElementById("targetDisplay").textContent = formatTime(info.duration);
     document.getElementById("setsDisplay").textContent = info.rest ? "" : `${info.sets} 세트`;
-    
+
     // 리더보드
     const lb = getLeaderboard();
     const medals = ["🥇", "🥈", "🥉"];
@@ -273,6 +280,7 @@ function render() {
 // ====== 초기화 ======
 async function init() {
     await loadPlayers();
+    await loadState();
     render();
 }
 
