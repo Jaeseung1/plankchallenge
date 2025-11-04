@@ -67,12 +67,12 @@
 
 <script>
 /* ===========================
-   ✅ 1. 백엔드 API 설정
+1. 백엔드 API 설정
    =========================== */
 const API_BASE = "http://162.120.184.232:3000/api";
 
 /* ===========================
-   ✅ 2. 스케줄 정보
+2. 스케줄 정보
    =========================== */
 const schedule = [
     { day: 1, duration: 20, sets: 2, rest: false },
@@ -111,7 +111,7 @@ let currentDay = 1;
 let players = [];
 
 /* ===========================
-   ✅ 3. API 함수
+3. API 함수
    =========================== */
 async function apiGet(path) {
     const res = await fetch(`${API_BASE}${path}`);
@@ -126,7 +126,7 @@ async function apiPost(path, data) {
 }
 
 /* ===========================
-   ✅ 4. 날짜 변경
+4. 날짜 변경
    =========================== */
 async function changeDay(delta) {
     currentDay = Math.max(1, Math.min(30, currentDay + delta));
@@ -135,7 +135,7 @@ async function changeDay(delta) {
 }
 
 /* ===========================
-   ✅ 5. 시간 표시 함수
+5. 시간 표시 함수
    =========================== */
 function formatTime(seconds) {
     if (seconds === 0) return "휴식일";
@@ -146,7 +146,7 @@ function formatTime(seconds) {
 }
 
 /* ===========================
-   ✅ 6. 완료 체크
+6. 완료 체크
    =========================== */
 async function toggleCompletion(playerId) {
     const player = players.find(p => p.id === playerId);
@@ -164,7 +164,7 @@ async function toggleCompletion(playerId) {
 }
 
 /* ===========================
-   ✅ 7. 플레이어 이름 변경
+7. 플레이어 이름 변경
    =========================== */
 async function updatePlayerName(id, name) {
     await apiPost("/players", { id, name });
@@ -173,7 +173,7 @@ async function updatePlayerName(id, name) {
 }
 
 /* ===========================
-   ✅ 8. 상태 로드
+8. 상태 로드
    =========================== */
 async function loadState() {
     const state = await apiGet("/state");
@@ -181,14 +181,14 @@ async function loadState() {
 }
 
 /* ===========================
-   ✅ 9. 플레이어 로드
+9. 플레이어 로드
    =========================== */
 async function loadPlayers() {
     players = await apiGet("/players");
 }
 
 /* ===========================
-   ✅ 10. 리더보드
+10. 리더보드
    =========================== */
 function getLeaderboard() {
     const list = players.map(p => ({
@@ -200,7 +200,7 @@ function getLeaderboard() {
 }
 
 /* ===========================
-   ✅ 11. 렌더링
+11. 렌더링
    =========================== */
 function render() {
     const info = schedule[currentDay - 1];
